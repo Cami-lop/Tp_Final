@@ -1,10 +1,11 @@
 #Tp Final Camila Lopez 
 #Abro el archivo ncdf 
 getwd()
-setwd("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/")
+#setwd("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/")
+setwd("/home/clinux01/Escritorio/CamiLabo/Tp_Final/")
 require(ncdf4)  #llamo a la libreria que voy a necesitar 
 #abro el archivo
-archivo<-nc_open("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/daily_data_buenos_aires_province_1993-2023.nc")
+archivo<-nc_open("/home/clinux01/Escritorio/CamiLabo/Tp_Final/daily_data_buenos_aires_province_1993-2023.nc")
 archivo
 # 4 dimen - variable lwe_precipitation_rate
 pp<-ncvar_get(archivo,varid="precip") #array de dime 9 lon/8 lat / 9892 dias 
@@ -57,16 +58,44 @@ for (i in 1:10) {
 write.table(puntos_df, "dataciudades_pr.txt", sep = "\t", row.names = FALSE)
 ###############################################################################
 require(lubridate) #llamo a las librerias que voy a necesitar 
+tiempos_leg<- as.Date(tiempo,origin="1970-01-01 00:00:00 ")
+head(tiempos_leg) #desde el 01/10/96 // se repite
+tail(tiempos_leg) #hasta el 31/07/23 #son 26 años y  meses
+#como se repite borro los datos que no quiero
+n<-seq(2,184,2) #posiciones repetidas 
+pp2<-pp
+pp2<-pp[,,-n]
+tiempo_legibles<-tiempos_leg[-n]
+#array donde guardo mi informacion
+media<-array(data=NA,dim=c(9,8,366))
+desvio<-array(data=NA, dim=c(9,8,366))
 
-tiempos_legibles<- as.Date(tiempo,origin="1970-01-01 00:00:00 0:00 ")
-head(tiempos_legibles) #desde el 10/01/96 // se repite
-tail(tiempos_legibles) #hasta el 31/07/23 #son 26 aÃ±os y 7 meses
+dias<-seq(ymd("2020-01-01"),ymd("2020-12-31"),1)
+dias_num<-1:366
+d<-format(tiempo_legibles,"%m %d")
 
+for(dia in dias_num){
+  #dias[dia]
+  #dato<-mean(pp2[,,which(format(dia,"%m %d")==d)])
+  #print(format(dias[dia],"%m %d"))
+  #print(which(d==format(dia,"%m %d")))
+  media[,,dia]<-apply(pp2[,,which(d==format(dias[dia],"%m %d"))],c(1,2),FUN=mean) #estan prdenadas desde el 01/01 al 31/12
+  desvio[,,dia]<-apply(pp2[,,which(d==format(dias[dia],"%m %d"))],c(1,2),FUN=sd)
+}
 
-dias<-as.Date("1996/10/01"):as.Date("2023/07/31")
-datas<-array(data=pp,dim=c(9,8,366,27))
+#grafico de la media y desvio para cada ciudad // un panel por ciudad 
+#ggplot necesita que sea un df 
+attach(puntos_df)
+bellavista<-media[which(lon == puntos_df[[1,2]]),which(lat == puntos_df[[1,3]]),]
+estadisticos_df<-data.frame()
+for ( i in 1:nrow(puntos_df)){
 
-media<-apply(datas,c(1,2,3),mean) #creo que es asi
-desvio<-apply(datas,c(1,2,3),sd)
+ fila<-data.frame("Nombre"= c(puntos_df[[i,1]]),
+                  "Media"=c(media[which(lon == puntos_df[[i,2]]),which(lat == puntos_df[[i,3]]),]),
+                  "Desvio"=c( desvio[which(lon == puntos_df[[i,2]]),which(lat == puntos_df[[i,3]]),])
+                     )
+ estadisticos_df<-rbind.data.frame(estadisticos_df,fila)
+}
 
+  
 
