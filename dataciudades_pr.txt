@@ -1,11 +1,11 @@
 "Nombre"	"Longitudes"	"Latitudes"
-"Bella Vista"	     301            -35
-"Ezeiza"	     301	    -35
-"La Plata"	     302	    -35
-"Pergamino"	     299	    -34
-"San Nicolas"	     300	    -33
-"Bahia Blanca"	     298	    -39
-"Ayacucho"	     302	    -37
-"Monte Chingolo      302	    -35
-"Magdalena"	     302            -35
-"Pinamar"	     303            -37
+"Bella Vista"	   301	           -35
+"Ezeiza"	   301	           -35
+"La Plata"	   302	           -35
+"Pergamino"	   299	           -34
+"San Nicolas"	   300	           -33
+"Bahia Blanca"	   298	           -39
+"Ayacucho"	   302	           -37
+"Monte Chingolo"   302	           -35
+"Magdalena"	   302	           -35
+"Pinamar"	   303	           -37
