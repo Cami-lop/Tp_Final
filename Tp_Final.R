@@ -107,3 +107,8 @@ grafico<-ggplot(estadisticos_df, aes(x = Fecha, y = Media)) +
   geom_smooth(method = "lm", se = FALSE, aes(color = Nombre)) 
 scale_color_manual(values = c("pink", "pink1", "deeppink","skyblue","skyblue3","purple","purple4","lightgreen","green4","yellow4")) +
   facet_wrap(~Nombre)
+
+
+
+
+
