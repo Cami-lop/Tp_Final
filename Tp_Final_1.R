@@ -1,11 +1,11 @@
 #Tp Final Camila Lopez 
 #Abro el archivo ncdf 
 getwd()
-setwd("C:/Users/Fernando Cabrera/Desktop/Cami_Labo/Tp_Final/")
-#setwd("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/")
+#setwd("C:/Users/Fernando Cabrera/Desktop/Cami_Labo/Tp_Final/")
+setwd("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/")
 require(ncdf4)  #llamo a la libreria que voy a necesitar 
 #abro el archivo
-archivo<-nc_open("C:/Users/Fernando Cabrera/Desktop/Cami_Labo/Tp_Final/daily_data_buenos_aires_province_1993-2023.nc")
+archivo<-nc_open("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/daily_data_buenos_aires_province_1993-2023.nc")
 archivo
 # 4 dimen - variable lwe_precipitation_rate
 pp<-ncvar_get(archivo,varid="precip") #array de dime 9 lon/8 lat / 9892 dias 
@@ -108,7 +108,8 @@ g <- ggplot(estadisticos_df, aes(x = Numero, y = Media, group=Nombre)) +
 #cada 45 dias queda bastante bien apesar de que hay fechas que no se ven 
 #cada 50 dias para que quede lindo 
 g
-############# porcentaje de a?os lluviosos de todos los 4 de febrero para cada punto de grilla #############
+############# porcentaje de anios lluviosos de todos los 4 de febrero para cada punto de grilla #############
+#se puede hacer general pidiendo que se ingrese la fecha por consola y verificarla
 feb<-array(data=NA,dim=c(9,8,27))
 f<-dmy("04/02/2002")
 feb<-pp2[,,which(d==format(f,"%m %d"))] #me quede con todos los 04/02  
@@ -136,10 +137,15 @@ library(metR)
 require(metR)
 require(ggplot2)
 mapa<-ggplot(data=febrero_porcentaje_df,aes(Longitudes,Latitudes))
-mapa<-mapa+borders(colour= "grey22",size=0.3) +ylab("Latitudes")+ xlab("Longitudes")
-mapa<-mapa+coord_quickmap(xlim=c(-65,-57),ylim=c(-40,-33),expand=F)
+mapa<-mapa+borders(colour= "grey2",size=1) +
+  labs(x = "Longitudes",
+       y = "Latitudes",
+       fill = "Porcentaje de lluvia",
+       title = "Probabilidad de lluvia en Buenos Aires ")
+mapa<-mapa+coord_quickmap(xlim=c(-70,-55),ylim=c(-45,-30),expand=F)
 mapa<-mapa+geom_contour_fill(aes(z=Porcentaje))
-mapa<-mapa+geom_point(data=febrero_porcentaje_df,aes(x=Longitudes,y=Latitudes,color=Porcentaje),size=3)
+mapa<-mapa+geom_contour(aes(z = Porcentaje ))
+#mapa<-mapa+geom_point(data=febrero_porcentaje_df,aes(x=Longitudes,y=Latitudes,color=Porcentaje),size=3)
 mapa<-mapa+theme_bw() +theme(strip.background=element_rect(fill="grey92"), plot.subtitle=element_text(hjust= 0.5,size=10), axis.text =element_text(size=7,colour ="black"), axis.title =element_text(size=8))
 mapa
   
