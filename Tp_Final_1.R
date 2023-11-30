@@ -7,6 +7,7 @@ require(ncdf4)  #llamo a la libreria que voy a necesitar
 #abro el archivo
 archivo<-nc_open("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/daily_data_buenos_aires_province_1993-2023.nc")
 archivo
+##################################PUNTO A#######################################
 # 4 dimen - variable lwe_precipitation_rate
 pp<-ncvar_get(archivo,varid="precip") #array de dime 9 lon/8 lat / 9892 dias 
 pp[which(pp == -9999)]<-NA # veo el datos faltante en la informacion del archivo y lo reemplazo con NA
@@ -56,7 +57,7 @@ for (i in 1:10) {
 }
 #guardo el archivo 
 write.table(puntos_df, "dataciudades_pr.txt", sep = "\t", row.names = FALSE)
-###############################################################################
+#########################################PUNTO B################################
 require(lubridate) #llamo a las librerias que voy a necesitar 
 tiempos_leg<- as.Date(tiempo,origin="1970-01-01 00:00:00 ")
 head(tiempos_leg) #desde el 01/10/96 // se repite
@@ -78,10 +79,9 @@ for(dia in dias_num){
   media[,,dia]<-apply(pp2[,,which(d==format(dias[dia],"%m %d"))],c(1,2),FUN=mean,na.rm =T ) #estan prdenadas desde el 01/01 al 31/12
   desvio[,,dia]<-apply(pp2[,,which(d==format(dias[dia],"%m %d"))],c(1,2),FUN=sd,na.rm =T )
 }
-
+################################################################################
 #grafico de la media y desvio para cada ciudad
-#ggplot necesita que sea un df 
-attach(puntos_df)
+attach(puntos_df) #ggplot necesita que sea un df 
 estadisticos_df<-data.frame()
 for ( i in 1:nrow(puntos_df)){
 
@@ -94,7 +94,7 @@ for ( i in 1:nrow(puntos_df)){
 #Agrego la columna fecha
 dd<-c(rep(format(dias,"%m-%d"),10))
 estadisticos_df$Fecha<-dd
-#####Para agregar el desv por encima y por debajo 
+#Para agregar el desv por encima y por debajo 
 estadisticos_df$Desv_sum=estadisticos_df$Media+estadisticos_df$Desvio
 estadisticos_df$Desv_rest=estadisticos_df$Media-estadisticos_df$Desvio
 estadisticos_df$Numero=c(rep(1:366,10))
@@ -105,10 +105,10 @@ g <- ggplot(estadisticos_df, aes(x = Numero, y = Media, group=Nombre)) +
   facet_wrap(.~Nombre,nrow = 5) +
   labs(title = "Media diaria de precipitacion ") +
   scale_x_continuous(name="Fecha",labels = estadisticos_df$Fecha[seq(1,366,by=50)],breaks = estadisticos_df$Numero[seq(1,366,by=50)])
-#cada 45 dias queda bastante bien apesar de que hay fechas que no se ven 
 #cada 50 dias para que quede lindo 
 g
-############# porcentaje de anios lluviosos de todos los 4 de febrero para cada punto de grilla #############
+######################################PUNTO C###################################
+#porcentaje de anios lluviosos de todos los 4 de febrero para cada punto de grilla
 #se puede hacer general pidiendo que se ingrese la fecha por consola y verificarla
 feb<-array(data=NA,dim=c(9,8,27))
 f<-dmy("04/02/2002")
@@ -124,7 +124,7 @@ lonn<-c(rep(lon-360,8)) #por cuestiones practicas cambie las longitudes
 #armo dataframe con las long y las lat 
 for (i in 1:8){
   latitud<-c(rep(lat[i],9))
-  print(latitud)
+  #print(latitud)
   latt<-c(latt,latitud)
 }
 
@@ -144,9 +144,69 @@ mapa<-mapa+borders(colour= "grey2",size=1) +
        title = "Probabilidad de lluvia en Buenos Aires ")
 mapa<-mapa+coord_quickmap(xlim=c(-70,-55),ylim=c(-45,-30),expand=F)
 mapa<-mapa+geom_contour_fill(aes(z=Porcentaje))
-mapa<-mapa+geom_contour(aes(z = Porcentaje ))
+#mapa<-mapa+geom_contour(aes(z = Porcentaje ))
 #mapa<-mapa+geom_point(data=febrero_porcentaje_df,aes(x=Longitudes,y=Latitudes,color=Porcentaje),size=3)
 mapa<-mapa+theme_bw() +theme(strip.background=element_rect(fill="grey92"), plot.subtitle=element_text(hjust= 0.5,size=10), axis.text =element_text(size=7,colour ="black"), axis.title =element_text(size=8))
 mapa
+#################################PUNTO D########################################
+#funcion que dada una ciudad y un dia muestre porcentaje de años lluviosos
+porcentaje_cuadrilla_df <- data.frame()  #lugar vacion
+for (i in 1:10) {
+  pos_cercana <- which.min(abs(lon - ciudades[[i]][[3]]))
+  pas_cercana <- which.min(abs(lat - ciudades[[i]][[2]]))
+  
+  lon_cerca[i] <- lon[pos_cercana]
+  lat_cerca[i] <- lat[pas_cercana]
+  
+  puntos_cercanos[[i]] <- list("Ciudad" = datos_ciudades[i, 1],
+                               "Latitud" = lat_cerca[i],
+                               "Longitud" = lon_cerca[i]-360)
+} #de puntos cercanos cambio las longitudes
+
+calcula_porcentaje <- function(ciudad, fecha_c) { 
+  f <- as.Date(fecha_c, format = "%d%m%Y") #la fecha a formato Date
+  fecha<-format(f,"%m %d")
+  mes<-substr(fecha,1,2)
+  dia<-substr(fecha,4,5)
+  febrero_f <- pp2[, , which(d == fecha)]# Obtener datos de febrero_f para la fecha dada
+
+  febrero_f[which(febrero_f > 0)] <- 1
+  
+  # Calcular el porcentaje de días de lluvia para cada cuadrilla
+  porcentaje_fc <- apply(febrero_f, c(1, 2), sum)
+  porcentaje_cuadrilla <- (porcentaje_fc / 27) * 100
+  datos<-as.vector(porcentaje_cuadrilla)
+  # Crear vectores de latitud y longitud
+  latt <- rep(lat, each = 9)
+  lonn <- rep(lon-360, 8)
+  
+  porcentaje_cuadrilla_df <- data.frame("Longitudes" = lonn,
+                                        "Latitudes" = latt,
+                                        "Porcentaje" = datos)
+  
+  # Obtener el porcentaje correspondiente a la ciudad y fecha específicas
+  index_quiero <- which((porcentaje_cuadrilla_df$Latitudes == puntos_cercanos[[ciudad]][[2]]) &
+                          (porcentaje_cuadrilla_df$Longitudes == puntos_cercanos[[ciudad]][[3]]))
+  
+  Porcentaje <- porcentaje_cuadrilla_df$Porcentaje[index_quiero]
+  
+  if (length(index_quiero) == 0) {
+    stop("No se encontró la ciudad en las coordenadas proporcionadas.")
+  }
+  if (any(is.na(as.numeric(dia))) || any(as.numeric(dia) < 1) || any(as.numeric(dia) > 29)) {
+    stop("Fecha incorrecta.")
+  }
+  
+  Porcentaje_round<-round(Porcentaje,2)
   
 
+  resultado<-paste("El porcentaje de años lluviosos para",ciudad,"el dia",dia,"del mes",mes,"es de",Porcentaje_round,"%")
+  # Devolver el porcentaje calculado
+  return(resultado)
+}
+
+# Llamada a la función
+calcula_porcentaje("Ramos Mejia", "14022023") #no funciona la ciudad es incorrecta
+calcula_porcentaje("Bella Vista", "31022023") #no funciona la fecha es incorrecta
+calcula_porcentaje("Bella Vista", "04022023") #funciona
+####################################PUNTO E#####################################
