@@ -100,13 +100,14 @@ estadisticos_df$Desv_rest=estadisticos_df$Media-estadisticos_df$Desvio
 estadisticos_df$Numero=c(rep(1:366,10))
 require(ggplot2)  
 g <- ggplot(estadisticos_df, aes(x = Numero, y = Media, group=Nombre)) +
-  geom_ribbon(estadisticos_df,mapping=aes(ymin=Desv_rest,ymax=Desv_sum),fill="pink",alpha=0.8)+
+  geom_ribbon(estadisticos_df,mapping=aes(ymin=Desv_rest,ymax=Desv_sum),fill="pink",alpha=0.5)+
   geom_line(aes(color = Nombre), size = 0.3, alpha = 3) +
   facet_wrap(.~Nombre,nrow = 5) +
-  labs(title = "Media diaria de precipitacion ") +
+  labs(title = "Media diaria de precipitacion ",subtitle = "Periodo de datos de 1996 a 2023",caption="Elaborado por Camila Lopez") +
   scale_x_continuous(name="Fecha",labels = estadisticos_df$Fecha[seq(1,366,by=50)],breaks = estadisticos_df$Numero[seq(1,366,by=50)])
 #cada 50 dias para que quede lindo 
 g
+#jpeg("Grafico.jpg") 
 ######################################PUNTO C###################################
 #porcentaje de anios lluviosos de todos los 4 de febrero para cada punto de grilla
 #se puede hacer general pidiendo que se ingrese la fecha por consola y verificarla
@@ -141,7 +142,10 @@ mapa<-mapa+borders(colour= "grey2",size=1) +
   labs(x = "Longitudes",
        y = "Latitudes",
        fill = "Porcentaje de lluvia",
-       title = "Probabilidad de lluvia en Buenos Aires ")
+       title = "Probabilidad de lluvia en Buenos Aires ",
+       subtitle = "Periodo de datos de 1996 a 2023",
+       caption="Elaborado por Camila Lopez"
+       )
 mapa<-mapa+coord_quickmap(xlim=c(-70,-55),ylim=c(-45,-30),expand=F)
 mapa<-mapa+geom_contour_fill(aes(z=Porcentaje))
 #mapa<-mapa+geom_contour(aes(z = Porcentaje ))
@@ -163,7 +167,8 @@ for (i in 1:10) {
                                "Longitud" = lon_cerca[i]-360)
 } #de puntos cercanos cambio las longitudes
 
-calcula_porcentaje <- function(ciudad, fecha_c) { 
+calcula_porcentaje <- function(ciudad, dia_especifico) { 
+  fecha_c<-paste(dia_especifico,"02","2023")
   f <- as.Date(fecha_c, format = "%d%m%Y") #la fecha a formato Date
   fecha<-format(f,"%m %d")
   mes<-substr(fecha,1,2)
@@ -196,17 +201,68 @@ calcula_porcentaje <- function(ciudad, fecha_c) {
   if (any(is.na(as.numeric(dia))) || any(as.numeric(dia) < 1) || any(as.numeric(dia) > 29)) {
     stop("Fecha incorrecta.")
   }
-  
-  Porcentaje_round<-round(Porcentaje,2)
-  
-
-  resultado<-paste("El porcentaje de años lluviosos para",ciudad,"el dia",dia,"del mes",mes,"es de",Porcentaje_round,"%")
+  resultado<-as.numeric(round(Porcentaje,2))
+  #print(paste("El porcentaje de años lluviosos para",ciudad,"el dia",dia,"del mes",mes,"es de",resultado,"%"))
   # Devolver el porcentaje calculado
   return(resultado)
 }
 
 # Llamada a la función
-calcula_porcentaje("Ramos Mejia", "14022023") #no funciona la ciudad es incorrecta
-calcula_porcentaje("Bella Vista", "31022023") #no funciona la fecha es incorrecta
-calcula_porcentaje("Bella Vista", "04022023") #funciona
+calcula_porcentaje("Ramos Mejia", "14") #no funciona la ciudad es incorrecta
+
+calcula_porcentaje("Bella Vista", "31") #no funciona la fecha es incorrecta
+
+calcula_porcentaje("Bella Vista", "04") 
 ####################################PUNTO E#####################################
+porcentajes <- list()
+resultado <- c()
+fechas_largas <- c()
+dias_ordenado<-c()
+pos_min<-c()
+fecha_ideal <- function(dd) {
+  menos <- c(1, 2, 3)
+  fecha_menos <- c(dd - menos)
+  fecha_mas <- c(dd + menos)
+  dias_ordenado <- sort(c(fecha_menos, fecha_mas))
+  
+  Porcentaje <- list()
+  
+  for (i in 1:length(dias_ordenado)) {
+    
+    for (c in 1:10) {
+      ciudad <- ciudades[[c]][[1]]
+      resul <- calcula_porcentaje(ciudad, dias_ordenado[i])
+      resultado <- c(resultado, resul)
+      
+      Porcentaje[[c]] <- list("Ciudad" = ciudad,
+                              "Fecha" = dias_ordenado[i],
+                              "resultado" = resul)
+    }
+  }
+  
+  # Encuentra la posición del mínimo, manejando posibles NAs
+  pos_min <- which.min(sapply(Porcentaje, function(x) ifelse(is.na(x$resultado), Inf, x$resultado)))
+  
+  # Comprueba si hay más de un mínimo
+  if (length(pos_min) > 1) {
+    cat("Hay múltiples fechas con el mismo porcentaje mínimo. Puede manejar esto según tus necesidades.")
+  }
+  
+  # Obtén la información del mínimo
+  ciudad_final <- Porcentaje[[pos_min]]$Ciudad
+  Fecha_final <- Porcentaje[[pos_min]]$Fecha
+  
+  producto <- paste("El día con menos porcentaje de años lluviosos es el ", Fecha_final, "de Febrero en la ciudad", ciudad_final)
+  return(producto)
+}
+
+fecha_ideal(4)
+
+fecha_ideal(31) #Fecha incorrecta 
+
+
+
+
+
+
+
