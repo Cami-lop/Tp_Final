@@ -1,7 +1,5 @@
 #Tp Final Camila Lopez 
-#Abro el archivo ncdf 
 getwd()
-#setwd("C:/Users/Fernando Cabrera/Desktop/Cami_Labo/Tp_Final/")
 setwd("C:/Users/camil/OneDrive/Escritorio/Cami_Labo/Tp_Final/")
 require(ncdf4)  #llamo a la libreria que voy a necesitar 
 #abro el archivo
@@ -23,8 +21,8 @@ ciudades<-list()
 datos_ciudades<-read.table("Ciudades.txt") #lee los datos del txt
 
 for (i in  1:10){
-  ciudad<-list("Nombre"= datos_ciudades[i,1], #preguntar si me conviene sacarlo
-                 "Latitud"=as.numeric(datos_ciudades[i,2]), #preguntar lo de hacerlo numerico
+  ciudad<-list("Nombre"= datos_ciudades[i,1], 
+                 "Latitud"=as.numeric(datos_ciudades[i,2]),
                  "Longitud"=(360+(as.numeric(datos_ciudades[i,3])))
   )
  ciudades[[i]]<-ciudad 
@@ -61,7 +59,7 @@ write.table(puntos_df, "dataciudades_pr.txt", sep = "\t", row.names = FALSE)
 require(lubridate) #llamo a las librerias que voy a necesitar 
 tiempos_leg<- as.Date(tiempo,origin="1970-01-01 00:00:00 ")
 head(tiempos_leg) #desde el 01/10/96 // se repite
-tail(tiempos_leg) #hasta el 31/07/23 #son 26 a?os y  meses
+tail(tiempos_leg) #hasta el 31/07/23 #son 26 anos y  meses
 #como se repite borro los datos que no quiero
 n<-seq(2,184,2) #posiciones repetidas 
 pp2<-pp
@@ -98,16 +96,17 @@ estadisticos_df$Fecha<-dd
 estadisticos_df$Desv_sum=estadisticos_df$Media+estadisticos_df$Desvio
 estadisticos_df$Desv_rest=estadisticos_df$Media-estadisticos_df$Desvio
 estadisticos_df$Numero=c(rep(1:366,10))
-require(ggplot2)  
+require(ggplot2) #llamo a la libreria que voy a necesitar 
+
 g <- ggplot(estadisticos_df, aes(x = Numero, y = Media, group=Nombre)) +
-  geom_ribbon(estadisticos_df,mapping=aes(ymin=Desv_rest,ymax=Desv_sum),fill="pink",alpha=0.5)+
-  geom_line(aes(color = Nombre), size = 0.3, alpha = 3) +
-  facet_wrap(.~Nombre,nrow = 5) +
-  labs(title = "Media diaria de precipitacion ",subtitle = "Periodo de datos de 1996 a 2023",caption="Elaborado por Camila Lopez") +
-  scale_x_continuous(name="Fecha",labels = estadisticos_df$Fecha[seq(1,366,by=50)],breaks = estadisticos_df$Numero[seq(1,366,by=50)])
+     geom_ribbon(estadisticos_df,mapping=aes(ymin=Desv_rest,ymax=Desv_sum),fill="pink",alpha=0.5)+
+     geom_line(aes(color = Nombre), size = 0.3, alpha = 3) +
+     facet_wrap(.~Nombre,nrow = 5) +
+     labs(title = "Media diaria de precipitacion ",subtitle = "Periodo de datos de 1996 a 2023",caption="Elaborado por Camila Lopez") +
+     scale_x_continuous(name="Fecha",labels = estadisticos_df$Fecha[seq(1,366,by=50)],breaks = estadisticos_df$Numero[seq(1,366,by=50)])
 #cada 50 dias para que quede lindo 
 g
-#jpeg("Grafico.jpg") 
+
 ######################################PUNTO C###################################
 #porcentaje de anios lluviosos de todos los 4 de febrero para cada punto de grilla
 #se puede hacer general pidiendo que se ingrese la fecha por consola y verificarla
@@ -119,11 +118,11 @@ febrero<-apply(feb,c(1,2),sum)          #sumo los tiempos
 febrero_porcentaje<-(febrero/27)*100    #porcentaje 
 colnames(febrero_porcentaje)<-lat       #para verificar 
 rownames(febrero_porcentaje)<-lon
-datos<-as.vector(febrero_porcentaje) #por columna 
+datos<-as.vector(febrero_porcentaje)    #por columna 
 latt<-c()
 lonn<-c(rep(lon-360,8)) #por cuestiones practicas cambie las longitudes 
-#armo dataframe con las long y las lat 
-for (i in 1:8){
+
+for (i in 1:8){ #armo dataframe con las long y las lat 
   latitud<-c(rep(lat[i],9))
   #print(latitud)
   latt<-c(latt,latitud)
@@ -134,10 +133,14 @@ febrero_porcentaje_df<-data.frame("Longitudes"=lonn,
                                   "Porcentaje"=datos)
 attach(febrero_porcentaje_df)
 #Mapa 
+#librerias que necesito 
 library(metR)
 require(metR)
 require(ggplot2)
 mapa<-ggplot(data=febrero_porcentaje_df,aes(Longitudes,Latitudes))
+mapa<-mapa+coord_quickmap(xlim=c(-70,-55),ylim=c(-45,-30),expand=F)
+mapa<-mapa+geom_contour_fill(aes(z=-Porcentaje))
+mapa<-mapa+theme_bw() +theme(strip.background=element_rect(fill="grey92"), plot.subtitle=element_text(hjust= 0.5,size=10), axis.text =element_text(size=7,colour ="black"), axis.title =element_text(size=8))
 mapa<-mapa+borders(colour= "grey2",size=1) +
   labs(x = "Longitudes",
        y = "Latitudes",
@@ -145,16 +148,12 @@ mapa<-mapa+borders(colour= "grey2",size=1) +
        title = "Probabilidad de lluvia en Buenos Aires ",
        subtitle = "Periodo de datos de 1996 a 2023",
        caption="Elaborado por Camila Lopez"
-       )
-mapa<-mapa+coord_quickmap(xlim=c(-70,-55),ylim=c(-45,-30),expand=F)
-mapa<-mapa+geom_contour_fill(aes(z=Porcentaje))
-#mapa<-mapa+geom_contour(aes(z = Porcentaje ))
-#mapa<-mapa+geom_point(data=febrero_porcentaje_df,aes(x=Longitudes,y=Latitudes,color=Porcentaje),size=3)
-mapa<-mapa+theme_bw() +theme(strip.background=element_rect(fill="grey92"), plot.subtitle=element_text(hjust= 0.5,size=10), axis.text =element_text(size=7,colour ="black"), axis.title =element_text(size=8))
+  )
 mapa
+
 #################################PUNTO D########################################
 #funcion que dada una ciudad y un dia muestre porcentaje de años lluviosos
-porcentaje_cuadrilla_df <- data.frame()  #lugar vacion
+porcentaje_cuadrilla_df <- data.frame()  #lugar vacio
 for (i in 1:10) {
   pos_cercana <- which.min(abs(lon - ciudades[[i]][[3]]))
   pas_cercana <- which.min(abs(lat - ciudades[[i]][[2]]))
@@ -164,12 +163,12 @@ for (i in 1:10) {
   
   puntos_cercanos[[i]] <- list("Ciudad" = datos_ciudades[i, 1],
                                "Latitud" = lat_cerca[i],
-                               "Longitud" = lon_cerca[i]-360)
-} #de puntos cercanos cambio las longitudes
+                               "Longitud" = lon_cerca[i]-360) #de puntos cercanos cambio las longitudes
 
+}
 calcula_porcentaje <- function(ciudad, dia_especifico) { 
   fecha_c<-paste(dia_especifico,"02","2023")
-  f <- as.Date(fecha_c, format = "%d%m%Y") #la fecha a formato Date
+  f <- as.Date(fecha_c, format = "%d%m%Y") #la fecha en formato fecha
   fecha<-format(f,"%m %d")
   mes<-substr(fecha,1,2)
   dia<-substr(fecha,4,5)
@@ -181,7 +180,7 @@ calcula_porcentaje <- function(ciudad, dia_especifico) {
   porcentaje_fc <- apply(febrero_f, c(1, 2), sum)
   porcentaje_cuadrilla <- (porcentaje_fc / 27) * 100
   datos<-as.vector(porcentaje_cuadrilla)
-  # Crear vectores de latitud y longitud
+  #vectores de latitud y longitud
   latt <- rep(lat, each = 9)
   lonn <- rep(lon-360, 8)
   
@@ -189,7 +188,7 @@ calcula_porcentaje <- function(ciudad, dia_especifico) {
                                         "Latitudes" = latt,
                                         "Porcentaje" = datos)
   
-  # Obtener el porcentaje correspondiente a la ciudad y fecha específicas
+  # el porcentaje correspondiente a la ciudad y fecha específicas
   index_quiero <- which((porcentaje_cuadrilla_df$Latitudes == puntos_cercanos[[ciudad]][[2]]) &
                           (porcentaje_cuadrilla_df$Longitudes == puntos_cercanos[[ciudad]][[3]]))
   
@@ -198,13 +197,13 @@ calcula_porcentaje <- function(ciudad, dia_especifico) {
   if (length(index_quiero) == 0) {
     stop("No se encontró la ciudad en las coordenadas proporcionadas.")
   }
-  if (any(is.na(as.numeric(dia))) || any(as.numeric(dia) < 1) || any(as.numeric(dia) > 29)) {
+  if (any(is.na(as.numeric(dia))) || any(as.numeric(dia) < 1) || any(as.numeric(dia) > 29)) { #Febrero va del 1 al 29
     stop("Fecha incorrecta.")
   }
   resultado<-as.numeric(round(Porcentaje,2))
   #print(paste("El porcentaje de años lluviosos para",ciudad,"el dia",dia,"del mes",mes,"es de",resultado,"%"))
-  # Devolver el porcentaje calculado
-  return(resultado)
+  
+  return(resultado) #devuelve el porcentaje calculado
 }
 
 # Llamada a la función
@@ -221,10 +220,18 @@ dias_ordenado<-c()
 pos_min<-c()
 fecha_ideal <- function(dd) {
   menos <- c(1, 2, 3)
+  if(dd== 1 & dd<=3){
+    fecha_mas <- c(dd + menos)
+    dias_ordenado <- sort(c(fecha_mas))
+  } else if (dd>=26 & dd<=29){
+    fecha_menos <- c(dd - menos)
+    dias_ordenado <- sort(c(fecha_menos))
+  }
+  else{
   fecha_menos <- c(dd - menos)
   fecha_mas <- c(dd + menos)
   dias_ordenado <- sort(c(fecha_menos, fecha_mas))
-  
+  }
   Porcentaje <- list()
   
   for (i in 1:length(dias_ordenado)) {
@@ -240,15 +247,15 @@ fecha_ideal <- function(dd) {
     }
   }
   
-  # Encuentra la posición del mínimo, manejando posibles NAs
+  # la posición del mínimo, manejando  NA
   pos_min <- which.min(sapply(Porcentaje, function(x) ifelse(is.na(x$resultado), Inf, x$resultado)))
   
-  # Comprueba si hay más de un mínimo
+  #hay más de un mínimo?
   if (length(pos_min) > 1) {
     cat("Hay múltiples fechas con el mismo porcentaje mínimo. Puede manejar esto según tus necesidades.")
   }
   
-  # Obtén la información del mínimo
+  # información del mínimo
   ciudad_final <- Porcentaje[[pos_min]]$Ciudad
   Fecha_final <- Porcentaje[[pos_min]]$Fecha
   
@@ -256,7 +263,7 @@ fecha_ideal <- function(dd) {
   return(producto)
 }
 
-fecha_ideal(4)
+fecha_ideal(1)
 
 fecha_ideal(31) #Fecha incorrecta 
 
